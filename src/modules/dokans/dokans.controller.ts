@@ -3,6 +3,7 @@ import {
   Controller,
   Get,
   Param,
+  ParseUUIDPipe,
   Patch,
   Query,
   UseGuards,
@@ -48,7 +49,7 @@ export class DokansController {
 
   @Get(':id')
   @ApiOperation({ summary: 'Get a dokan with its events (public)' })
-  detail(@Param('id') id: string) {
+  detail(@Param('id', ParseUUIDPipe) id: string) {
     return this.dokans.findOne(id);
   }
 }

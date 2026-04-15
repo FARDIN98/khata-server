@@ -1,4 +1,4 @@
-import { IsEmail, IsEnum, IsOptional, IsString, MinLength, ValidateIf, ValidateNested } from 'class-validator';
+import { IsEmail, IsIn, IsOptional, IsString, IsUrl, MaxLength, MinLength, ValidateIf, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
 import { UserRole } from '../../../common/enums';
 
@@ -16,7 +16,8 @@ export class CreateDokanDto {
   description: string;
 
   @IsOptional()
-  @IsString()
+  @IsUrl({ protocols: ['http', 'https'], require_protocol: true })
+  @MaxLength(500)
   logoUrl?: string;
 }
 
@@ -35,7 +36,7 @@ export class RegisterDto {
   @IsString()
   phone?: string;
 
-  @IsEnum(UserRole)
+  @IsIn([UserRole.GRAHOK, UserRole.DOKANDAR])
   role: UserRole.GRAHOK | UserRole.DOKANDAR;
 
   @ValidateIf((o) => o.role === UserRole.DOKANDAR)

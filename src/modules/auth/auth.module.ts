@@ -16,10 +16,16 @@ import { Dokan } from '../../entities/dokan.entity';
     JwtModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
-      useFactory: (config: ConfigService): JwtModuleOptions => ({
-        secret: config.get<string>('JWT_SECRET') || 'dev-fallback-secret',
-        signOptions: { expiresIn: (config.get<string>('JWT_EXPIRES_IN') || '7d') as any },
-      }),
+      useFactory: (config: ConfigService): JwtModuleOptions => {
+        const secret = config.get<string>('JWT_SECRET');
+        if (!secret) {
+          throw new Error('JWT_SECRET environment variable is required');
+        }
+        return {
+          secret,
+          signOptions: { expiresIn: (config.get<string>('JWT_EXPIRES_IN') || '7d') as any },
+        };
+      },
     }),
   ],
   controllers: [AuthController],

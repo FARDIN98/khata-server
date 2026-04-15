@@ -7,6 +7,7 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
 } from 'typeorm';
+import { Exclude } from 'class-transformer';
 import { UserRole } from '../common/enums';
 import { Dokan } from './dokan.entity';
 import { Booking } from './booking.entity';
@@ -23,6 +24,7 @@ export class User {
   email: string;
 
   @Column()
+  @Exclude()
   passwordHash: string;
 
   @Column()

@@ -28,7 +28,6 @@ export class DokansService {
   async findForOwner(ownerId: string) {
     const dokan = await this.dokansRepo.findOne({
       where: { owner: { id: ownerId } },
-      relations: ['owner'],
     });
     if (!dokan) throw new NotFoundException('You do not own a Dokan');
     return dokan;

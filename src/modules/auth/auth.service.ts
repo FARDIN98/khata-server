@@ -1,6 +1,6 @@
 import { Injectable, ConflictException, UnauthorizedException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, DataSource } from 'typeorm';
+import { Repository, DataSource, QueryFailedError } from 'typeorm';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { User } from '../../entities/user.entity';
@@ -18,7 +18,8 @@ export class AuthService {
   ) {}
 
   async register(dto: RegisterDto) {
-    const existing = await this.usersRepo.findOne({ where: { email: dto.email } });
+    const email = dto.email.trim().toLowerCase();
+    const existing = await this.usersRepo.findOne({ where: { email } });
     if (existing) throw new ConflictException('Email already registered');
 
     if (dto.role === UserRole.DOKANDAR && !dto.dokan) {
@@ -27,30 +28,38 @@ export class AuthService {
 
     const passwordHash = await bcrypt.hash(dto.password, 10);
 
-    const user = await this.dataSource.transaction(async (m) => {
-      const u = m.create(User, {
-        email: dto.email,
-        passwordHash,
-        name: dto.name,
-        phone: dto.phone,
-        role: dto.role,
+    try {
+      const user = await this.dataSource.transaction(async (m) => {
+        const u = m.create(User, {
+          email,
+          passwordHash,
+          name: dto.name,
+          phone: dto.phone,
+          role: dto.role,
+        });
+        await m.save(u);
+
+        if (dto.role === UserRole.DOKANDAR && dto.dokan) {
+          const d = m.create(Dokan, { ...dto.dokan, owner: u });
+          await m.save(d);
+          u.dokan = d;
+        }
+        return u;
       });
-      await m.save(u);
 
-      if (dto.role === UserRole.DOKANDAR && dto.dokan) {
-        const d = m.create(Dokan, { ...dto.dokan, owner: u });
-        await m.save(d);
-        u.dokan = d;
+      return this.buildAuthResponse(user);
+    } catch (err) {
+      if (err instanceof QueryFailedError && (err as any).code === '23505') {
+        throw new ConflictException('Email already registered');
       }
-      return u;
-    });
-
-    return this.buildAuthResponse(user);
+      throw err;
+    }
   }
 
   async login(dto: LoginDto) {
+    const email = dto.email.trim().toLowerCase();
     const user = await this.usersRepo.findOne({
-      where: { email: dto.email },
+      where: { email },
       relations: ['dokan'],
     });
     if (!user) throw new UnauthorizedException('Invalid credentials');
