@@ -1,9 +1,11 @@
 import { Body, Controller, Post, HttpCode } from '@nestjs/common';
 import { ApiTags, ApiOperation } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 import { AuthService } from './auth.service';
 import { LoginDto, RegisterDto } from './dto/register.dto';
 
 @ApiTags('auth')
+@Throttle({ auth: { limit: 5, ttl: 60_000 } })
 @Controller('auth')
 export class AuthController {
   constructor(private readonly auth: AuthService) {}

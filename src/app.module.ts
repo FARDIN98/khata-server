@@ -1,6 +1,8 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { APP_GUARD } from '@nestjs/core';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { typeOrmConfig } from './config/typeorm.config';
@@ -23,6 +25,10 @@ import { CustomerKhatasModule } from './modules/customer-khatas/customer-khatas.
       inject: [ConfigService],
       useFactory: (config: ConfigService) => typeOrmConfig(config),
     }),
+    ThrottlerModule.forRoot([
+      { name: 'default', ttl: 60_000, limit: 60 },
+      { name: 'auth', ttl: 60_000, limit: 5 },
+    ]),
     AuthModule,
     UsersModule,
     DokansModule,
@@ -35,6 +41,9 @@ import { CustomerKhatasModule } from './modules/customer-khatas/customer-khatas.
     CustomerKhatasModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    { provide: APP_GUARD, useClass: ThrottlerGuard },
+  ],
 })
 export class AppModule {}
