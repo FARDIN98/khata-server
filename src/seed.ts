@@ -104,8 +104,8 @@ async function seed() {
 
   const shop1 = await mkDokandar(
     'shop-one@khata.bd',
-    'Aisha Rahman',
-    'Aisha\u2019s Boutique',
+    'Maya Rahman',
+    'Maya\u2019s Boutique',
     'Fashion',
     'Dhanmondi 27, Dhaka',
     'Curated Bangladeshi fashion boutique featuring sample sales and workshops.',
@@ -146,7 +146,7 @@ async function seed() {
     eventsRepo.create({
       title: 'Eid Sample Sale Night',
       type: EventType.SAMPLE_SALE,
-      venue: 'Aisha\u2019s Boutique, Dhanmondi 27',
+      venue: 'Maya\u2019s Boutique, Dhanmondi 27',
       scheduledAt: futureDate(7),
       description:
         'Exclusive 50% off on selected pieces. Open to all grahoks, instant booking.',
@@ -159,7 +159,7 @@ async function seed() {
     eventsRepo.create({
       title: 'Master Stitching Workshop',
       type: EventType.WORKSHOP,
-      venue: 'Aisha\u2019s Studio, Dhanmondi',
+      venue: 'Maya\u2019s Studio, Dhanmondi',
       scheduledAt: futureDate(14),
       description:
         'Hands-on workshop with master tailor. Paid event, seats limited.',
@@ -172,7 +172,7 @@ async function seed() {
     eventsRepo.create({
       title: 'VIP Loyalty Preview',
       type: EventType.EXHIBITION,
-      venue: 'Aisha\u2019s Boutique',
+      venue: 'Maya\u2019s Boutique',
       scheduledAt: futureDate(21),
       description:
         'Private preview of the winter line for VIP tier customers only.',
@@ -218,7 +218,7 @@ async function seed() {
     eventsRepo.create({
       title: 'Past Sample Sale',
       type: EventType.SAMPLE_SALE,
-      venue: 'Aisha\u2019s Boutique, Dhanmondi 27',
+      venue: 'Maya\u2019s Boutique, Dhanmondi 27',
       scheduledAt: futureDate(-30),
       description: 'Historical sample sale attended by demo customers.',
       visibility: Visibility.PUBLIC,
@@ -232,7 +232,7 @@ async function seed() {
     eventsRepo.create({
       title: 'Past Workshop',
       type: EventType.WORKSHOP,
-      venue: 'Aisha\u2019s Studio, Dhanmondi',
+      venue: 'Maya\u2019s Studio, Dhanmondi',
       scheduledAt: futureDate(-15),
       description: 'Historical workshop attended by demo customers.',
       visibility: Visibility.PUBLIC,
