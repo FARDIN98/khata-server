@@ -20,8 +20,10 @@ import {
 loadEnv();
 
 async function seed() {
-  const url = process.env.DATABASE_URL;
-  if (!url) throw new Error('DATABASE_URL is required');
+  // Prefer DATABASE_URL_DIRECT (non-pooled endpoint) for schema sync.
+  // Neon's pooled URL does not support DDL needed by synchronize:true.
+  const url = process.env.DATABASE_URL_DIRECT ?? process.env.DATABASE_URL;
+  if (!url) throw new Error('DATABASE_URL or DATABASE_URL_DIRECT is required');
 
   const ds = new DataSource({
     type: 'postgres',
