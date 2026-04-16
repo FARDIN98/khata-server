@@ -194,6 +194,14 @@ export class BookingsService {
       throw new ForbiddenException('Not your event');
     }
     if (booking.status === status) return booking;
+    if (
+      booking.status === BookingStatus.PAYMENT_PENDING &&
+      (status === BookingStatus.APPROVED ||
+        status === BookingStatus.REJECTED ||
+        status === BookingStatus.BANNED)
+    ) {
+      throw new BadRequestException('payment must clear first');
+    }
     booking.status = status;
     return this.dataSource.transaction(async (manager) => {
       const saved = await manager.getRepository(Booking).save(booking);
