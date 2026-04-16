@@ -72,17 +72,18 @@ export class AuthService {
 
   private buildAuthResponse(user: User) {
     const token = this.jwt.sign({ sub: user.id, email: user.email, role: user.role });
+    return { token, user: this.toUserView(user) };
+  }
+
+  toUserView(user: User) {
     return {
-      token,
-      user: {
-        id: user.id,
-        email: user.email,
-        name: user.name,
-        role: user.role,
-        dokan: user.dokan
-          ? { id: user.dokan.id, name: user.dokan.name, category: user.dokan.category }
-          : null,
-      },
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      role: user.role,
+      dokan: user.dokan
+        ? { id: user.dokan.id, name: user.dokan.name, category: user.dokan.category }
+        : null,
     };
   }
 }
