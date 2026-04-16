@@ -84,9 +84,88 @@ async function bootstrap() {
     SwaggerModule.setup('api/docs', app, document, {
       customSiteTitle: 'Khata API Docs',
       customCss: `
+        :root, html, body { color-scheme: light only !important; }
+        body { background: #FAF6F0 !important; }
         .swagger-ui .topbar { display: none; }
         .swagger-ui .info .title { font-family: 'Fraunces', Georgia, serif; }
-        body { background: #FAF6F0; }
+
+        /* Neutralize Swagger UI 5's built-in dark mode (prefers-color-scheme: dark). */
+        @media (prefers-color-scheme: dark) {
+          html, body { background: #FAF6F0 !important; color: #1a1a1a !important; }
+          .swagger-ui, .swagger-ui .info, .swagger-ui .info .title,
+          .swagger-ui .info p, .swagger-ui .info li, .swagger-ui .info table,
+          .swagger-ui .scheme-container, .swagger-ui .scheme-container .schemes > label,
+          .swagger-ui .opblock-tag, .swagger-ui .opblock-tag small,
+          .swagger-ui .opblock .opblock-summary-description,
+          .swagger-ui .opblock .opblock-summary-path,
+          .swagger-ui .opblock .opblock-summary-path__deprecated,
+          .swagger-ui .opblock .opblock-section-header h4,
+          .swagger-ui .opblock-description-wrapper, .swagger-ui .opblock-external-docs-wrapper,
+          .swagger-ui .opblock-title_normal, .swagger-ui .responses-inner h4,
+          .swagger-ui .responses-inner h5, .swagger-ui .response-col_status,
+          .swagger-ui .response-col_description, .swagger-ui .response-col_links,
+          .swagger-ui .parameter__name, .swagger-ui .parameter__type,
+          .swagger-ui .parameter__in, .swagger-ui .parameter__deprecated,
+          .swagger-ui .tab li, .swagger-ui .tab li button.tablinks,
+          .swagger-ui table thead tr td, .swagger-ui table thead tr th,
+          .swagger-ui table tbody tr td, .swagger-ui label,
+          .swagger-ui .servers > label, .swagger-ui .servers-title,
+          .swagger-ui .filter .operation-filter-input,
+          .swagger-ui .model, .swagger-ui .model-title, .swagger-ui section.models h4,
+          .swagger-ui section.models h5, .swagger-ui .model-toggle::after,
+          .swagger-ui .markdown p, .swagger-ui .markdown li,
+          .swagger-ui .renderedMarkdown p, .swagger-ui .renderedMarkdown li,
+          .swagger-ui .btn, .swagger-ui .dialog-ux .modal-ux-header h3,
+          .swagger-ui .dialog-ux .modal-ux-content p,
+          .swagger-ui .auth-container h4, .swagger-ui .auth-container label {
+            color: #1a1a1a !important;
+          }
+          .swagger-ui .scheme-container, .swagger-ui .opblock-tag,
+          .swagger-ui section.models, .swagger-ui .opblock,
+          .swagger-ui .opblock .opblock-section-header,
+          .swagger-ui .filter-container, .swagger-ui .dialog-ux .modal-ux,
+          .swagger-ui .dialog-ux .modal-ux-header, .swagger-ui .dialog-ux .modal-ux-content,
+          .swagger-ui .auth-container, .swagger-ui select {
+            background: #ffffff !important;
+          }
+          .swagger-ui input[type=text], .swagger-ui input[type=password],
+          .swagger-ui input[type=search], .swagger-ui input[type=email],
+          .swagger-ui textarea, .swagger-ui select {
+            background: #ffffff !important; color: #1a1a1a !important;
+            border: 1px solid #d9d2c4 !important;
+          }
+          .swagger-ui .info code, .swagger-ui .markdown code,
+          .swagger-ui .renderedMarkdown code, .swagger-ui .response-col_description code {
+            background: #f3efe7 !important; color: #1a1a1a !important;
+          }
+          .swagger-ui .info a, .swagger-ui a { color: #0a6b6b !important; }
+          .swagger-ui svg:not(:root) { fill: #1a1a1a !important; }
+          .swagger-ui .opblock-summary-method { color: #ffffff !important; }
+        }
+      `,
+      customJsStr: `
+        (function () {
+          function stripDarkMediaRules() {
+            var sheets = Array.prototype.slice.call(document.styleSheets);
+            for (var i = 0; i < sheets.length; i++) {
+              try {
+                var rules = sheets[i].cssRules;
+                if (!rules) continue;
+                for (var j = rules.length - 1; j >= 0; j--) {
+                  var rule = rules[j];
+                  if (rule.type === CSSRule.MEDIA_RULE &&
+                      rule.media && rule.media.mediaText &&
+                      rule.media.mediaText.indexOf('prefers-color-scheme: dark') !== -1 &&
+                      sheets[i].href && sheets[i].href.indexOf('swagger-ui') !== -1) {
+                    sheets[i].deleteRule(j);
+                  }
+                }
+              } catch (e) { /* CORS-restricted sheet, skip */ }
+            }
+          }
+          if (document.readyState === 'complete') stripDarkMediaRules();
+          else window.addEventListener('load', stripDarkMediaRules);
+        })();
       `,
       swaggerOptions: {
         persistAuthorization: true,
