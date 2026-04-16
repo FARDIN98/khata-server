@@ -30,7 +30,7 @@ export class DokanEvent {
   @Column({ nullable: true })
   eventLink: string;
 
-  @Column({ type: 'timestamp' })
+  @Column({ type: 'timestamptz' })
   scheduledAt: Date;
 
   @Column({ type: 'text' })
