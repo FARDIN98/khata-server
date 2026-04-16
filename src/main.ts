@@ -13,8 +13,18 @@ async function bootstrap() {
   // Stripe webhook needs raw body on its specific path; everything else is JSON.
   app.use('/payments/webhook', json({ type: 'application/json', verify: (req: any, _res, buf) => { req.rawBody = buf; } }));
 
+  const envOrigins =
+    process.env.FRONTEND_ORIGIN?.split(',') ?? ['http://localhost:3000'];
+  const vercelPreview = /\.vercel\.app$/;
   app.enableCors({
-    origin: process.env.FRONTEND_ORIGIN?.split(',') ?? ['http://localhost:3000'],
+    origin: (origin, callback) => {
+      // Non-browser tools (curl, server-to-server) send no Origin header.
+      if (!origin) return callback(null, true);
+      if (envOrigins.includes(origin) || vercelPreview.test(new URL(origin).hostname)) {
+        return callback(null, true);
+      }
+      return callback(new Error(`Origin ${origin} not allowed by CORS`), false);
+    },
     credentials: true,
   });
 
