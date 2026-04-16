@@ -192,6 +192,7 @@ export class BookingsService {
     if (booking.event.dokan.id !== dokanId) {
       throw new ForbiddenException('Not your event');
     }
+    if (booking.status === status) return booking;
     booking.status = status;
     const saved = await this.bookingsRepo.save(booking);
     if (status === BookingStatus.APPROVED) {
