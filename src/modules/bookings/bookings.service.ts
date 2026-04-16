@@ -8,7 +8,7 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
-import { QueryFailedError, Repository } from 'typeorm';
+import { DataSource, QueryFailedError, Repository } from 'typeorm';
 import Stripe from 'stripe';
 import { Booking } from '../../entities/booking.entity';
 import { DokanEvent } from '../../entities/dokan-event.entity';
@@ -29,6 +29,7 @@ export class BookingsService {
     @InjectRepository(DokanEvent) private eventsRepo: Repository<DokanEvent>,
     private khatas: CustomerKhatasService,
     private config: ConfigService,
+    private dataSource: DataSource,
   ) {}
 
   private getStripe(): Stripe.Stripe {
@@ -194,11 +195,13 @@ export class BookingsService {
     }
     if (booking.status === status) return booking;
     booking.status = status;
-    const saved = await this.bookingsRepo.save(booking);
-    if (status === BookingStatus.APPROVED) {
-      await this.khatas.recordEventAttended(saved);
-    }
-    return saved;
+    return this.dataSource.transaction(async (manager) => {
+      const saved = await manager.getRepository(Booking).save(booking);
+      if (status === BookingStatus.APPROVED) {
+        await this.khatas.recordEventAttended(saved, manager);
+      }
+      return saved;
+    });
   }
 
   private async loadEventOrFail(eventId: string) {

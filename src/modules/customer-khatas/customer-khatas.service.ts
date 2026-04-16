@@ -4,7 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { EntityManager, Repository } from 'typeorm';
 import { CustomerKhata } from '../../entities/customer-khata.entity';
 import { Booking } from '../../entities/booking.entity';
 import { LoyaltyTier } from '../../common/enums';
@@ -47,17 +47,32 @@ export class CustomerKhatasService {
     return LoyaltyTier.NEW;
   }
 
-  async recordEventAttended(booking: Booking) {
-    const khata = await this.getOrCreateForPair(
-      booking.grahok.id,
-      booking.event.dokan.id,
-    );
+  async recordEventAttended(booking: Booking, manager?: EntityManager) {
+    const repo = manager
+      ? manager.getRepository(CustomerKhata)
+      : this.khatasRepo;
+    let khata = await repo.findOne({
+      where: {
+        grahok: { id: booking.grahok.id },
+        dokan: { id: booking.event.dokan.id },
+      },
+    });
+    if (!khata) {
+      khata = repo.create({
+        grahok: { id: booking.grahok.id } as any,
+        dokan: { id: booking.event.dokan.id } as any,
+        totalVisits: 0,
+        eventsAttended: 0,
+        totalSpentPaisa: '0',
+        tier: LoyaltyTier.NEW,
+      });
+    }
     khata.totalVisits += 1;
     khata.eventsAttended += 1;
     const paid = BigInt(booking.paidAmountPaisa ?? 0);
     khata.totalSpentPaisa = String(BigInt(khata.totalSpentPaisa ?? '0') + paid);
     khata.tier = this.recomputeTier(khata);
-    return this.khatasRepo.save(khata);
+    return repo.save(khata);
   }
 
   meetsTier(khata: CustomerKhata, minTier: LoyaltyTier): boolean {
