@@ -45,9 +45,10 @@ async function seed() {
   // Clear demo data in dependency order (children first).
   // Keep existing prod data untouched by scoping to the demo emails only.
   const demoEmails = [
-    'admin@khata.bd',
+    'admin@khata.com',
     'shop-one@khata.bd',
     'shop-two@khata.bd',
+    'demo@khata.com',
     'grahok-one@khata.bd',
     'grahok-two@khata.bd',
     'grahok-three@khata.bd',
@@ -61,10 +62,10 @@ async function seed() {
   }
 
   // 1 super admin
-  const adminHash = await bcrypt.hash('admin123', 10);
+  const adminHash = await bcrypt.hash('admin1234', 10);
   const admin = await usersRepo.save(
     usersRepo.create({
-      email: 'admin@khata.bd',
+      email: 'admin@khata.com',
       passwordHash: adminHash,
       name: 'Platform Admin',
       role: UserRole.SUPER_ADMIN,
@@ -118,9 +119,9 @@ async function seed() {
     'Traditional iftar spreads and seasonal food events.',
   );
 
-  // 3 grahoks
-  const mkGrahok = async (email: string, name: string) => {
-    const hash = await bcrypt.hash('grahok123', 10);
+  // 4 grahoks (1 "demo" account with simple password + 3 named ones with tier data)
+  const mkGrahok = async (email: string, name: string, password = 'grahok123') => {
+    const hash = await bcrypt.hash(password, 10);
     return usersRepo.save(
       usersRepo.create({
         email,
@@ -130,6 +131,8 @@ async function seed() {
       }),
     );
   };
+  const demoGrahok = await mkGrahok('demo@khata.com', 'Demo Customer', 'demo1234');
+  void demoGrahok;
   const grahok1 = await mkGrahok('grahok-one@khata.bd', 'Nadia Chowdhury');
   const grahok2 = await mkGrahok('grahok-two@khata.bd', 'Farhan Islam');
   const grahok3 = await mkGrahok('grahok-three@khata.bd', 'Sumaiya Akhter');
@@ -276,14 +279,15 @@ async function seed() {
     }),
   ]);
 
-  console.log('> seeded: 1 admin, 2 dokandars, 3 grahoks, 7 events, 2 khatas, 2 historical bookings');
+  console.log('> seeded: 1 admin, 2 dokandars, 4 grahoks, 7 events, 2 khatas, 2 historical bookings');
   console.log('');
-  console.log('Demo credentials (all passwords follow role-based pattern):');
-  console.log('  SUPER_ADMIN:  admin@khata.bd        / admin123');
+  console.log('Demo credentials:');
+  console.log('  SUPER_ADMIN:  admin@khata.com       / admin1234');
+  console.log('  GRAHOK demo:  demo@khata.com        / demo1234');
   console.log('  DOKANDAR #1:  shop-one@khata.bd     / dokan123');
   console.log('  DOKANDAR #2:  shop-two@khata.bd     / dokan123');
-  console.log('  GRAHOK #1:    grahok-one@khata.bd   / grahok123');
-  console.log('  GRAHOK #2:    grahok-two@khata.bd   / grahok123');
+  console.log('  GRAHOK #1:    grahok-one@khata.bd   / grahok123   (pre-seeded VIP tier)');
+  console.log('  GRAHOK #2:    grahok-two@khata.bd   / grahok123   (pre-seeded REGULAR tier)');
   console.log('  GRAHOK #3:    grahok-three@khata.bd / grahok123');
 
   await ds.destroy();
