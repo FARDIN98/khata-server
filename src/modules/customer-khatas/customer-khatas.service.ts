@@ -41,7 +41,9 @@ export class CustomerKhatasService {
     if (khata.manualTierOverride) return khata.manualTierOverride;
     const spent = BigInt(khata.totalSpentPaisa ?? '0');
     if (spent >= VIP_THRESHOLD_PAISA) return LoyaltyTier.VIP;
-    if (spent >= REGULAR_THRESHOLD_PAISA) return LoyaltyTier.REGULAR;
+    if (spent >= REGULAR_THRESHOLD_PAISA || khata.eventsAttended >= 3) {
+      return LoyaltyTier.REGULAR;
+    }
     return LoyaltyTier.NEW;
   }
 
