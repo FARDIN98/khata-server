@@ -10,6 +10,7 @@ import { Booking } from './entities/booking.entity';
 import { Invitation } from './entities/invitation.entity';
 import { Review } from './entities/review.entity';
 import {
+  BookingStatus,
   EventType,
   LoyaltyTier,
   UserRole,
@@ -36,6 +37,8 @@ async function seed() {
   const usersRepo = ds.getRepository(User);
   const dokansRepo = ds.getRepository(Dokan);
   const eventsRepo = ds.getRepository(DokanEvent);
+  const khatasRepo = ds.getRepository(CustomerKhata);
+  const bookingsRepo = ds.getRepository(Booking);
 
   // Clear demo data in dependency order (children first).
   // Keep existing prod data untouched by scoping to the demo emails only.
@@ -205,7 +208,73 @@ async function seed() {
     }),
   ]);
 
-  console.log('> seeded: 1 admin, 2 dokandars, 3 grahoks, 5 events');
+  // 2 historical events (past) to attach APPROVED bookings for demo purposes.
+  const pastEvent1 = await eventsRepo.save(
+    eventsRepo.create({
+      title: 'Past Sample Sale',
+      type: EventType.SAMPLE_SALE,
+      venue: 'Aisha\u2019s Boutique, Dhanmondi 27',
+      scheduledAt: futureDate(-30),
+      description: 'Historical sample sale attended by demo customers.',
+      visibility: Visibility.PUBLIC,
+      feeInPaisa: 0,
+      capacity: 100,
+      isFeatured: false,
+      dokan: shop1.dokan,
+    }),
+  );
+  const pastEvent2 = await eventsRepo.save(
+    eventsRepo.create({
+      title: 'Past Workshop',
+      type: EventType.WORKSHOP,
+      venue: 'Aisha\u2019s Studio, Dhanmondi',
+      scheduledAt: futureDate(-15),
+      description: 'Historical workshop attended by demo customers.',
+      visibility: Visibility.PUBLIC,
+      feeInPaisa: 0,
+      capacity: 100,
+      isFeatured: false,
+      dokan: shop1.dokan,
+    }),
+  );
+
+  // Pre-seeded khatas so the demo video shows tier states without waiting for
+  // a live Stripe round-trip.
+  await khatasRepo.save([
+    khatasRepo.create({
+      grahok: grahok1,
+      dokan: shop1.dokan,
+      totalVisits: 0,
+      eventsAttended: 0,
+      totalSpentPaisa: '0',
+      tier: LoyaltyTier.VIP,
+      manualTierOverride: LoyaltyTier.VIP,
+    }),
+    khatasRepo.create({
+      grahok: grahok2,
+      dokan: shop1.dokan,
+      totalVisits: 2,
+      eventsAttended: 2,
+      totalSpentPaisa: '200000', // ৳2,000 — above REGULAR_THRESHOLD (৳1,000)
+      tier: LoyaltyTier.REGULAR,
+    }),
+  ]);
+
+  // 2 approved historical bookings for grahok2 -> shop1 past events.
+  await bookingsRepo.save([
+    bookingsRepo.create({
+      grahok: grahok2,
+      event: pastEvent1,
+      status: BookingStatus.APPROVED,
+    }),
+    bookingsRepo.create({
+      grahok: grahok2,
+      event: pastEvent2,
+      status: BookingStatus.APPROVED,
+    }),
+  ]);
+
+  console.log('> seeded: 1 admin, 2 dokandars, 3 grahoks, 7 events, 2 khatas, 2 historical bookings');
   console.log('');
   console.log('Demo credentials (all passwords follow role-based pattern):');
   console.log('  SUPER_ADMIN:  admin@khata.bd        / admin123');
