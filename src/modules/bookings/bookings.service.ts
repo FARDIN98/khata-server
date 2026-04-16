@@ -8,7 +8,7 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource, QueryFailedError, Repository } from 'typeorm';
+import { DataSource, In, QueryFailedError, Repository } from 'typeorm';
 import Stripe from 'stripe';
 import { Booking } from '../../entities/booking.entity';
 import { DokanEvent } from '../../entities/dokan-event.entity';
@@ -52,6 +52,7 @@ export class BookingsService {
         'This event requires payment. Use /checkout instead.',
       );
     }
+    await this.assertCapacityAvailable(event);
 
     const status = await this.resolveCreationStatus(grahok, event);
     try {
@@ -80,6 +81,7 @@ export class BookingsService {
     if (event.visibility === Visibility.LOYALTY) {
       await this.assertTierForLoyalty(grahok, event);
     }
+    await this.assertCapacityAvailable(event);
 
     const existing = await this.bookingsRepo.findOne({
       where: { grahok: { id: grahok.id }, event: { id: eventId } },
@@ -224,6 +226,22 @@ export class BookingsService {
   private assertFutureEvent(event: DokanEvent) {
     if (event.scheduledAt.getTime() <= Date.now()) {
       throw new BadRequestException('Cannot book a past or ongoing event');
+    }
+  }
+
+  private async assertCapacityAvailable(event: DokanEvent) {
+    const active = await this.bookingsRepo.count({
+      where: {
+        event: { id: event.id },
+        status: In([
+          BookingStatus.APPROVED,
+          BookingStatus.PENDING,
+          BookingStatus.PAYMENT_PENDING,
+        ]),
+      },
+    });
+    if (active >= event.capacity) {
+      throw new BadRequestException('Event is full');
     }
   }
 
