@@ -156,10 +156,6 @@ export class BookingsService {
     booking.paidAmountPaisa = amountPaisa;
     await this.bookingsRepo.save(booking);
 
-    await this.khatas
-      .recordEventAttended(booking)
-      .catch(() => undefined);
-
     return { updated: true, booking };
   }
 
@@ -197,7 +193,11 @@ export class BookingsService {
       throw new ForbiddenException('Not your event');
     }
     booking.status = status;
-    return this.bookingsRepo.save(booking);
+    const saved = await this.bookingsRepo.save(booking);
+    if (status === BookingStatus.APPROVED) {
+      await this.khatas.recordEventAttended(saved);
+    }
+    return saved;
   }
 
   private async loadEventOrFail(eventId: string) {
