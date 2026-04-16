@@ -43,16 +43,62 @@ async function bootstrap() {
   if (process.env.NODE_ENV !== 'production') {
     const swaggerConfig = new DocumentBuilder()
       .setTitle('Khata API')
-      .setDescription('Dokan Loyalty & Event Platform API')
-      .setVersion('1.0')
-      .addServer('/api')
-      .addBearerAuth()
+      .setDescription(
+        'REST API for the Dokan Loyalty & Event Platform. Lets shopkeepers (DOKANDAR) ' +
+          'create events at their Dokan, customers (GRAHOK) book and pay, and earn loyalty tiers ' +
+          '(NEW -> REGULAR -> VIP). Includes invitations, reviews, Stripe payments, and admin moderation.' +
+          '\n\n**Auth:** JWT bearer token from `POST /auth/login`. Send as `Authorization: Bearer <token>`.' +
+          '\n\n**Roles:** `GRAHOK` (customer), `DOKANDAR` (shopkeeper), `SUPER_ADMIN`.',
+      )
+      .setVersion('1.0.0')
+      .setContact('Khata Team', '', '')
+      .setLicense('MIT', 'https://opensource.org/licenses/MIT')
+      .addServer('/api', 'API base path')
+      .addBearerAuth(
+        {
+          type: 'http',
+          scheme: 'bearer',
+          bearerFormat: 'JWT',
+          description: 'JWT obtained from POST /auth/login',
+        },
+        'bearer',
+      )
+      .addTag('auth', 'Register, login, and current-user lookup')
+      .addTag('dokans', 'Public dokan listings + Dokandar self-management')
+      .addTag('dokan-events', 'Public event listings + Dokandar event CRUD')
+      .addTag('bookings', 'Customer booking flows + Dokandar approval queue')
+      .addTag(
+        'customer-khatas',
+        'Loyalty ledger per (Customer, Dokan) pair',
+      )
+      .addTag(
+        'invitations',
+        'Dokandar-issued invites that bypass tier checks',
+      )
+      .addTag('reviews', 'Post-attendance reviews with 24h edit window')
+      .addTag('admin', 'SUPER_ADMIN moderation endpoints')
       .build();
+
     const document = SwaggerModule.createDocument(app, swaggerConfig);
-    SwaggerModule.setup('api/docs', app, document);
+
+    SwaggerModule.setup('api/docs', app, document, {
+      customSiteTitle: 'Khata API Docs',
+      customCss: `
+        .swagger-ui .topbar { display: none; }
+        .swagger-ui .info .title { font-family: 'Fraunces', Georgia, serif; }
+        body { background: #FAF6F0; }
+      `,
+      swaggerOptions: {
+        persistAuthorization: true,
+        docExpansion: 'none',
+        filter: true,
+        tagsSorter: 'alpha',
+        operationsSorter: 'alpha',
+      },
+    });
   }
 
-  const port = process.env.PORT ?? 3001;
+  const port = process.env.PORT ?? 3003;
   await app.listen(port);
   console.log(`Khata API running on http://localhost:${port}`);
   console.log(`Swagger docs at http://localhost:${port}/api/docs`);
