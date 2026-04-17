@@ -2,16 +2,18 @@ import { NestFactory, Reflector } from '@nestjs/core';
 import { ClassSerializerInterceptor, ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { NestExpressApplication } from '@nestjs/platform-express';
-import { json } from 'express';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
+  // rawBody: true makes Nest's default JSON + urlencoded parsers also save
+  // req.rawBody as a Buffer — which is what the Stripe webhook handler needs.
+  // Adding a separate app.use('/payments/webhook', json(...)) here would register
+  // body-parser's jsonParser in the router stack; Nest's isMiddlewareApplied check
+  // would then skip registering its GLOBAL json parser, breaking body parsing on
+  // every other route.
   const app = await NestFactory.create<NestExpressApplication>(AppModule, {
     rawBody: true,
   });
-
-  // Stripe webhook needs raw body on its specific path; everything else is JSON.
-  app.use('/payments/webhook', json({ type: 'application/json', verify: (req: any, _res, buf) => { req.rawBody = buf; } }));
 
   const envOrigins =
     process.env.FRONTEND_ORIGIN?.split(',') ?? ['http://localhost:3000'];
